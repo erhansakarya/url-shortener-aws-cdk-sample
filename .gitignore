@@ -11,5 +11,14 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+<<<<<<< HEAD
 # Dependency directories (remove the comment below to include it)
 # vendor/
+=======
+# go.sum should be committed
+!go.sum
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+>>>>>>> e811b6ef49f9f6fd27e4b0cf4453af2ac4f91b47
