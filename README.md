@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # url-shortener-aws-cdk-sample
 # POST create-short-url:
 Request:
