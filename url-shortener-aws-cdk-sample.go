@@ -2,7 +2,10 @@ package main
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk"
-	"github.com/aws/aws-cdk-go/awscdk/awssns"
+	"github.com/aws/aws-cdk-go/awscdk/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/awslambda"
+	"github.com/aws/aws-cdk-go/awscdk/awss3assets"
 	"github.com/aws/constructs-go/constructs/v3"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -19,10 +22,25 @@ func NewUrlShortenerAwsCdkSampleStack(scope constructs.Construct, id string, pro
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	// The code that defines your stack goes here
+	table := awsdynamodb.NewTable(stack, jsii.String("mapping-table"), &awsdynamodb.TableProps{
+		PartitionKey: &awsdynamodb.Attribute{Name: jsii.String("Id"), Type: awsdynamodb.AttributeType_STRING},
+	})
 
-	// as an example, here's how you would define an AWS SNS topic:
-	awssns.NewTopic(stack, jsii.String("MyTopic"), &awssns.TopicProps{
-		DisplayName: jsii.String("MyCoolTopic"),
+	lambdaAsset := awss3assets.NewAsset(stack, jsii.String("lambda-function-zip"), &awss3assets.AssetProps{
+		Path: jsii.String("./functions/main.zip"),
+	})
+
+	function := awslambda.NewFunction(stack, jsii.String("back-end"), &awslambda.FunctionProps{
+		Runtime: awslambda.Runtime_GO_1_X(),
+		Handler: jsii.String("main"),
+		Code:    awslambda.Code_FromBucket(lambdaAsset.Bucket(), lambdaAsset.S3ObjectKey(), nil),
+	})
+
+	table.GrantReadWriteData(function)
+	function.AddEnvironment(jsii.String("TABLE_NAME"), table.TableName(), nil)
+
+	awsapigateway.NewLambdaRestApi(stack, jsii.String("api"), &awsapigateway.LambdaRestApiProps{
+		Handler: function,
 	})
 
 	return stack
